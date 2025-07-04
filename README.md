@@ -58,4 +58,5 @@ This project is open-source and available under the MIT License.
 
 ---
 
-✅ Generated with 💡 by [Sachin Samy](https://github.com/SachinSamy)
+✅ Generated with 💡 by [Sachin Samy](https://github.com/sachinsamylist/QR-images-to-PDF-generator)
+
