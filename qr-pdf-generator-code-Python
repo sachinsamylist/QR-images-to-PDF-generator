@@ -1,0 +1,107 @@
+# === Import necessary libraries ===
+from reportlab.lib.pagesizes import A4                   # For standard A4 page size
+from reportlab.pdfgen import canvas                      # To create PDF canvas
+from reportlab.lib.units import inch                     # To define QR size in inches
+import os                                                # For interacting with the file system
+
+# === User Configuration Section ===
+
+# Folder containing all QR code images (PNG, JPG, JPEG formats)
+folder_path = r"C:\Users\SachinSamy\Desktop\PDF_QR\black_n_white_tags_300_02072025\black_n_white_tags_300_02072025\2485"
+
+# Path where the final PDF will be saved
+output_pdf = r"C:/Users/SachinSamy/Desktop/PDF_QR/black_n_white_tags_300_02072025.pdf"
+
+# Size of each QR code image in the grid (1 inch × 1 inch)
+qr_size = 1 * inch
+
+# Define how many QR codes to place per row and column (grid layout)
+columns = 6           # Number of QR codes in each row
+rows = 9              # Number of QR codes in each column (per page)
+
+# Set page size (width and height) as per A4 dimensions
+page_width, page_height = A4
+
+# === Grid Calculation Section ===
+
+# Calculate total width occupied by all QR codes in a row
+total_grid_width = columns * qr_size
+
+# Calculate horizontal spacing between QR codes and page borders
+horizontal_spacing = (page_width - total_grid_width) / (columns + 1)
+
+# Use same spacing vertically to keep grid cells square
+vertical_spacing = horizontal_spacing
+
+# Total height used by QR codes + spacing
+total_grid_height = rows * qr_size + (rows + 1) * vertical_spacing
+
+# Calculate top margin to vertically center the grid
+top_margin = (page_height - total_grid_height) / 2
+
+# === Load All QR Code Image Files from Folder ===
+
+# Get list of image filenames and sort them alphabetically
+qr_images = sorted([
+    f for f in os.listdir(folder_path)
+    if f.lower().endswith((".png", ".jpg", ".jpeg"))
+])
+
+# === Start Generating the PDF ===
+
+# Create a PDF canvas with A4 size
+c = canvas.Canvas(output_pdf, pagesize=A4)
+
+# === Define Function to Draw Small Cut Marks Around Each QR Code ===
+def draw_cut_marks(x, y, size, mark_len=3):
+    """
+    Draws small 3-point cut marks at the center of each edge of the QR code square.
+
+    Parameters:
+    - x, y: bottom-left position of QR code image
+    - size: width and height of the image square (in points)
+    - mark_len: length of the cut mark lines (default is 3 points)
+    """
+    # Top center mark
+    c.line(x + size/2, y + size, x + size/2, y + size + mark_len)
+    # Bottom center mark
+    c.line(x + size/2, y, x + size/2, y - mark_len)
+    # Left center mark
+    c.line(x, y + size/2, x - mark_len, y + size/2)
+    # Right center mark
+    c.line(x + size, y + size/2, x + size + mark_len, y + size/2)
+
+# === Loop Through Each QR Image and Position it in the Grid ===
+for i, img_file in enumerate(qr_images):
+    # Determine which page this image goes to
+    page_index = i // (columns * rows)
+
+    # Position within the current page grid
+    index_in_page = i % (columns * rows)
+
+    # Calculate row and column index for grid placement
+    row = index_in_page // columns
+    col = index_in_page % columns
+
+    # Calculate x and y position on the page
+    x = horizontal_spacing + col * (qr_size + horizontal_spacing)
+    y = page_height - top_margin - (row + 1) * (qr_size + vertical_spacing)
+
+    # Get full image path
+    img_path = os.path.join(folder_path, img_file)
+
+    # Place QR code image on canvas
+    c.drawImage(img_path, x, y, width=qr_size, height=qr_size)
+
+    # Add optional cut marks around the image
+    draw_cut_marks(x, y, qr_size)
+
+    # When the current page is full, start a new page
+    if (i + 1) % (columns * rows) == 0:
+        c.showPage()
+
+# Finalize and save the PDF file
+c.save()
+
+# Print confirmation message
+print(f"✅ Final PDF saved with centered layout and cut marks: {output_pdf}")
